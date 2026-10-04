@@ -1,0 +1,33 @@
+name: Publish release sources
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack reviewed release
+        run: |
+          python - <<'PY'
+          import zipfile, pathlib, shutil
+          with zipfile.ZipFile('yakunina-legal-site.zip') as archive:
+              for info in archive.infolist():
+                  path = pathlib.PurePosixPath(info.filename)
+                  if path.parts[0] != 'yakunina-legal' or '..' in path.parts or path.is_absolute():
+                      raise ValueError('Unexpected archive path')
+                  target = pathlib.Path(*path.parts[1:])
+                  if info.is_dir(): continue
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  target.write_bytes(archive.read(info))
+          shutil.copytree('dist', 'docs', dirs_exist_ok=True)
+          pathlib.Path('docs/.nojekyll').touch()
+          PY
+      - name: Commit published sources and static preview
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dist docs server README.md direct-setup.md market-prices.md start-local.ps1 Dockerfile .dockerignore .gitignore
+          git diff --cached --quiet || git commit -m "Publish reviewed legal landing release"
+          git push
