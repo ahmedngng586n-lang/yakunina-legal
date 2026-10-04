@@ -1,0 +1,7 @@
+.git
+private
+*.sqlite3*
+*-secrets.json
+.env
+__pycache__
+*.pyc
