@@ -24,10 +24,13 @@ jobs:
           shutil.copytree('dist', 'docs', dirs_exist_ok=True)
           pathlib.Path('docs/.nojekyll').touch()
           PY
+      - name: Verify lead handling
+        run: python -m unittest discover -s server -p test_leads.py -v
       - name: Commit published sources and static preview
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dist docs server README.md direct-setup.md market-prices.md start-local.ps1 Dockerfile .dockerignore .gitignore
+          git add dist docs server EDIT-CONTENT.md README.md direct-setup.md market-prices.md start-local.ps1 Dockerfile .dockerignore .gitignore
           git diff --cached --quiet || git commit -m "Publish reviewed legal landing release"
           git push
+
