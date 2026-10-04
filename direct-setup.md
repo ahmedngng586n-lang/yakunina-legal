@@ -1,6 +1,6 @@
 # Подготовка к Яндекс Директу
 
-На первом экране указаны город, направления помощи и начальная цена. Основной виджет ведёт к сводке и заявке внутри карточки; отдельный чат предлагает форму при просьбе о консультации и после трёх ответов.
+На первом экране указаны город, направления помощи и начальная цена. Главное действие — звонок. Пошаговый подбор помощи раскрывается ниже первого экрана. Чат доступен только в серверной версии.
 
 ## Метки и цели
 
@@ -8,7 +8,7 @@
 
 Динамические параметры описаны в [документации Директа](https://yandex.ru/support/direct/ru/statistics/url-tags).
 
-В `dist/assets/marketing.js` замените `LEGAL_METRIKA_ID = 0` на реальный номер счётчика. Пока номер равен нулю, Метрика выключена. Создайте цели типа «JavaScript-событие»: `lead_submit` (главная: сервер сохранил заявку), `phone_click`, `messenger_click`, `chat_open`, `chat_answer`, `wizard_start`, `wizard_complete`, `lead_form_open`. Их передача использует официальный [reachGoal](https://yandex.ru/support/metrica/ru/objects/reachgoal). Имена, контакты и текст обращений не передаются в параметры целей, Вебвизор отключён.
+В `dist/assets/site-config.js` укажите реальный номер счётчика в поле `metrikaId`. Пока номер равен нулю, Метрика выключена. Создайте цели типа «JavaScript-событие»: `lead_submit` (главная: сервер сохранил заявку), `callback_submit`, `callback_open`, `phone_click`, `messenger_click`, `sms_click`, `telegram_click`, `chat_open`, `chat_answer`, `wizard_start`, `wizard_complete`, `lead_form_open`. Их передача использует официальный [reachGoal](https://yandex.ru/support/metrica/ru/objects/reachgoal). Имена, контакты и текст обращений не передаются в параметры целей, Вебвизор отключён.
 
 ## Публикация
 

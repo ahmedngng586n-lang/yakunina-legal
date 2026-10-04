@@ -22,6 +22,11 @@ class LeadsTest(unittest.TestCase):
     def test_idempotence(self):
         first = leads.queue(self.config,self.body)
         self.assertEqual(first,leads.queue(self.config,self.body))
+    def test_callback_requires_phone(self):
+        with self.assertRaises(ValueError):
+            leads.validate(dict(self.body,kind='callback',channel='callback'))
+        lead=leads.validate(dict(self.body,contact='+7 (922) 123-45-67',kind='callback',channel='callback'))
+        self.assertEqual(lead['channel'],'Обратный звонок')
     def test_delivery_failure_and_retry(self):
         lead_id,_=leads.queue(self.config,self.body)
         with patch('leads.urllib.request.urlopen',side_effect=OSError('offline')):

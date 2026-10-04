@@ -25,6 +25,8 @@ def validate(body):
     contact = clean(body.get('contact', ''), 120)
     if not name or not contact or not (len(re.sub(r'\D', '', contact)) >= 10 or re.fullmatch(r'@[\w]{5,32}', contact) or re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', contact)):
         raise ValueError('Укажите имя и телефон, Telegram @username или email.')
+    if body.get('kind') == 'callback' and (not re.fullmatch(r'[+()\d\s-]+', contact) or not 10 <= len(re.sub(r'\D','',contact)) <= 15):
+        raise ValueError('Введите телефон с кодом города или страны.')
     goal = clean(body.get('goal', 'Консультация'), 80)
     if goal not in GOALS:
         raise ValueError('Выберите формат консультации.')
@@ -37,7 +39,7 @@ def validate(body):
     tags = {k: clean(source[k], 180) for k in ('utm_source','utm_medium','utm_campaign','utm_content','utm_term','yclid') if k in source}
     return {'name': name, 'contact': contact, 'topic': clean(body.get('topic', ''), 120),
             'goal': goal, 'price': GOALS[goal], 'description': clean(body.get('description', ''), 1500),
-            'channel': 'Чат' if body.get('channel') == 'chat' else 'Основной виджет', 'source': tags,
+            'channel': {'chat':'Чат','callback':'Обратный звонок'}.get(body.get('channel'),'Основной виджет'), 'source': tags,
             'request_id': key, 'consent_version': '2026-10-04'}
 
 @contextmanager

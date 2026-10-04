@@ -7,8 +7,8 @@
   <meta name="theme-color" content="#102e28">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23153f36'/%3E%3Ctext x='32' y='44' font-size='43' text-anchor='middle' font-family='Georgia' fill='%23f6f4ec'%3EЯ%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="assets/style.css">
-  <script defer src="assets/marketing.js"></script>
-  <script defer src="assets/gsap.min.js"></script><script defer src="assets/ScrollTrigger.min.js"></script><script defer src="assets/lenis.min.js"></script><script defer src="assets/app.js"></script>
+  <script defer src="assets/site-config.js"></script><script defer src="assets/marketing.js"></script>
+  <script defer src="assets/gsap.min.js"></script><script defer src="assets/ScrollTrigger.min.js"></script><script defer src="assets/lenis.min.js"></script><script defer src="assets/app.js"></script><script defer src="assets/callback.js"></script>
 </head>
 <body>
 <a class="skip" href="#main">Перейти к содержанию</a>
@@ -20,19 +20,22 @@
   <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="navigation" aria-label="Открыть меню"><span></span><span></span></button>
 </header>
 <main id="main">
-<section class="hero" id="top" aria-labelledby="hero-title">
+<section class="hero hero-focused" id="top" aria-labelledby="hero-title">
   <div class="hero-copy">
-    <p class="eyebrow" data-intro>Светлана Якунина · Частный юрист в Бузулуке</p>
-    <h1 id="hero-title" data-intro>Когда нужен<br>не совет,<br>а <em>ясный план.</em></h1>
-    <p class="hero-description" data-intro>Договор с непонятными условиями? Конфликт на работе? Спор по недвижимости? Разберём ваш вопрос и определим, что делать дальше.</p>
-    <p class="hero-service-line" data-intro>Юридические консультации в Бузулуке<br>Договоры · Трудовые вопросы · Недвижимость · Споры</p>
-    <div class="hero-actions" data-intro><button class="button" type="button" data-open-chat>Задать вопрос</button><a class="text-link" href="#formats">Посмотреть услуги и цены</a></div>
-    <p class="hero-mini-price" data-intro>Консультация — от 1 500 ₽ · стоимость согласуем заранее</p>
-    <div class="hero-proof" data-intro><strong>20+</strong><span>лет юридического опыта<small>в коммерческих и бюджетных организациях</small></span></div>
+    <p class="eyebrow" data-intro>Светлана Якунина · Частный юрист</p>
+    <h1 id="hero-title" data-intro>Юрист в Бузулуке:<br><em>договоры, трудовые споры<br>и недвижимость.</em></h1>
+    <p class="hero-description" data-intro>Проверю договор, помогу разобраться в конфликте на работе и документах для сделки с недвижимостью.</p>
+    <p class="hero-mini-price" data-intro>Консультация — от 1 500 ₽</p>
+    <div class="hero-actions" data-intro><a class="button" href="tel:+79228921257">Позвонить · +7 922 892-12-57</a></div>
+    <div class="hero-proof" data-intro><strong>20+</strong><span>лет юридического опыта<small>Договорная, претензионная и судебная работа</small></span></div>
   </div>
-  <div class="hero-art"><img src="assets/legal-editorial.webp" alt="Зелёная папка с документами и перьевая ручка на светлом каменном столе" width="1536" height="1024" fetchpriority="high"><div class="hero-question-panel"><div id="wizard" aria-live="polite"><p class="panel-overline">С чего начнём?</p><h2>Выберите вашу ситуацию</h2><p>Для подбора помощи включите JavaScript или позвоните по номеру на сайте.</p></div><div class="panel-footer"><span>20+ лет практики</span><span>Бузулук</span></div></div></div>
 </section>
 <div class="intro-strip"><span>Лично разбираю ваш вопрос</span><span>Объясняю понятным языком</span><span>Согласуем объём и стоимость</span></div>
+<section class="help-picker section" id="select-help" aria-label="Подбор юридической помощи">
+  <details class="help-disclosure"><summary><span>Не знаете, с чего начать?</span><strong>Подобрать помощь и узнать цену <span aria-hidden="true">↗</span></strong></summary>
+  <div class="picker-layout"><div class="picker-explanation"><p class="eyebrow">Второй шаг — если нужна подсказка</p><h2>Выберите<br><em>вашу задачу.</em></h2><p>Тема, нужная помощь и краткая сводка. Можно пропустить описание и сразу посмотреть начальную цену.</p></div>
+  <div class="hero-question-panel"><div id="wizard" aria-live="polite"></div><div class="panel-footer"><span>Подбор помощи</span><span>Бузулук</span></div></div></div></details>
+</section>
 <section class="section practice" id="practice" aria-labelledby="practice-title">
   <div class="section-heading" data-reveal><p class="eyebrow">01 / Направления помощи</p><h2 id="practice-title">Узнаёте<br><em>свою ситуацию?</em></h2><p>Выберите близкую тему. При первом обращении уточним задачу и необходимый объём работы.</p></div>
   <div class="practice-grid">
@@ -44,7 +47,7 @@
   <div class="business-note"><span class="eyebrow">Для предпринимателей</span><p>Договорная и кадровая работа, юридическое сопровождение медицинских, строительных и транспортных организаций. Опыт работы с закупками по 44-ФЗ и 223-ФЗ.</p><a class="text-link" href="#contact">Обсудить задачу бизнеса</a></div>
 </section>
 <section class="about section" id="about" aria-labelledby="about-title">
-  <div class="about-left" data-reveal><p class="eyebrow">02 / Лично о практике</p><h2 id="about-title">Светлана<br><em>Якунина.</em></h2><p class="full-name">Светлана Валерьевна Якунина</p><p class="about-lead">Юрист с более чем 20-летним опытом правового сопровождения организаций.</p><p>Мой опыт объединяет договорную, претензионную и судебную работу, трудовое право и недвижимость. Работа в разных отраслях помогает смотреть на вопрос с учётом документов, обязательств и практических последствий.</p><div class="education"><span>Образование</span><p>Оренбургский государственный университет<br><strong>Юрист · гражданско-правовая специализация</strong></p><p>Бузулукский строительный колледж<br><strong>Правоведение · диплом с отличием</strong></p></div></div>
+  <div class="about-left" data-reveal><img id="lawyer-photo" class="lawyer-photo" alt="Светлана Валерьевна Якунина" hidden><p class="eyebrow">02 / Лично о практике</p><h2 id="about-title">Светлана<br><em>Якунина.</em></h2><p class="full-name">Светлана Валерьевна Якунина</p><p class="about-lead">Юрист с более чем 20-летним опытом правового сопровождения организаций.</p><p>Мой опыт объединяет договорную, претензионную и судебную работу, трудовое право и недвижимость. Работа в разных отраслях помогает смотреть на вопрос с учётом документов, обязательств и практических последствий.</p><div class="education"><span>Образование</span><p>Оренбургский государственный университет<br><strong>Юрист · гражданско-правовая специализация</strong></p><p>Бузулукский строительный колледж<br><strong>Правоведение · диплом с отличием</strong></p></div></div>
   <div class="experience" data-reveal><p class="eyebrow">Профессиональный путь</p>
     <article><span>2026 — настоящее время</span><h3>Строительство и транспорт</h3><p>Юридическое сопровождение: договоры, оценка рисков, претензионная работа и внутренние документы.</p></article>
     <article><span>2023 — настоящее время</span><h3>Частное здравоохранение</h3><p>Исполнительный директор медицинской организации. Организационно-правовое сопровождение и участие в управленческих решениях.</p></article>
@@ -57,31 +60,32 @@
   <ol class="steps"><li data-reveal><span>01</span><h3>Расскажите о вопросе</h3><p>Позвоните или подготовьте короткое сообщение. Достаточно обозначить тему и удобный способ связи.</p></li><li data-reveal><span>02</span><h3>Уточним обстоятельства</h3><p>Определим, какие документы нужны для разбора и какой формат работы подходит вашей задаче.</p></li><li data-reveal><span>03</span><h3>Согласуем работу</h3><p>Обсудим содержание консультации или сопровождения, стоимость и дальнейшие действия.</p></li></ol>
 </section>
 <section class="section formats" id="formats" aria-labelledby="formats-title">
-  <div class="section-heading" data-reveal><p class="eyebrow">04 / Форматы и стоимость</p><h2 id="formats-title">Что вы получите.<br><em>Сколько это стоит.</em></h2><p>Стоимость зависит от вопроса, документов и объёма работы. Условия согласуются до начала оказания услуги.</p></div>
-  <div class="format-grid"><article class="format-card" data-reveal><span class="eyebrow">Разобраться в ситуации</span><h3>Консультация</h3><p>Когда нужно понять правовую сторону вопроса и возможные варианты действий.</p><ul><li>Разбор обстоятельств</li><li>Оценка представленных документов</li><li>Обсуждение следующих шагов</li></ul><div class="price-label">от 1 500 ₽<small>за консультацию по вашему вопросу</small></div><button class="button button-outline" type="button" data-format="Консультация">Обсудить консультацию</button></article>
-  <article class="format-card featured" data-reveal><span class="eyebrow">Подготовить правовую основу</span><h3>Работа с документами</h3><p>Когда нужно проверить условия или подготовить документ под конкретную задачу.</p><ul><li>Договоры и соглашения</li><li>Претензии и ответы</li><li>Исковые и кадровые документы</li></ul><div class="price-label">от 3 000 ₽<small>за правовую проверку документа</small></div><button class="button button-light" type="button" data-format="Работа с документами">Обсудить документ</button></article>
-  <article class="format-card" data-reveal><span class="eyebrow">Получить комплексную помощь</span><h3>Судебное сопровождение</h3><p>Когда вопрос требует нескольких этапов и последовательной юридической работы.</p><ul><li>Договорная и претензионная работа</li><li>Подготовка правовой позиции</li><li>Представительство по согласованию</li></ul><div class="price-label">от 15 000 ₽<small>за судебное сопровождение · объём по договору</small></div><button class="button button-outline" type="button" data-format="Сопровождение">Обсудить сопровождение</button></article></div>
-  <div class="pricing-table" aria-label="Стоимость отдельных услуг" data-reveal>
-    <div class="pricing-row"><span>Проверка договора · условия, риски, рекомендации</span><strong>от 3 000 ₽</strong></div>
-    <div class="pricing-row"><span>Подготовка договора, претензии или ответа</span><strong>от 4 000 ₽</strong></div>
-    <div class="pricing-row"><span>Подготовка искового заявления</span><strong>от 5 000 ₽</strong></div>
-    <div class="pricing-row"><span>Регулярная юридическая помощь бизнесу</span><strong>по договорённости</strong></div>
+  <div class="section-heading" data-reveal><p class="eyebrow">04 / Стоимость</p><h2 id="formats-title">Три основных<br><em>формата помощи.</em></h2></div>
+  <div class="compact-prices" data-reveal>
+    <div><span><strong>Консультация</strong><small>Разбор вопроса и следующих действий</small></span><b>от 1 500 ₽</b></div>
+    <div><span><strong>Проверка документа</strong><small>Условия договора, риски и рекомендации</small></span><b>от 3 000 ₽</b></div>
+    <div><span><strong>Судебное сопровождение</strong><small>Подготовка позиции и работа по делу</small></span><b>от 15 000 ₽</b></div>
   </div>
-  <p class="pricing-note">Указаны начальные цены. Точная стоимость зависит от сложности, количества документов и объёма работы — согласуем её до начала. Госпошлины, нотариальные и другие внешние расходы оплачиваются отдельно.</p>
+  <p class="pricing-note">Цена зависит от сложности вопроса, количества документов и объёма работы. До начала услуги вы получите стоимость вашей задачи. Госпошлины, нотариальные и другие внешние расходы оплачиваются отдельно.</p>
+  <a class="text-link" href="tel:+79228921257">Узнать стоимость по телефону →</a>
 </section>
 <section class="section faq" aria-labelledby="faq-title"><div data-reveal><p class="eyebrow">05 / До первого обращения</p><h2 id="faq-title">Вопросы,<br>которые <em>возникают.</em></h2></div><div class="faq-list" data-reveal>
-  <details><summary>С чем можно обратиться?</summary><p>С вопросами по договорам, трудовым отношениям, недвижимости, претензиям и судебной работе. Возможность помощи по конкретной ситуации уточняется при первом обращении.</p></details>
-  <details><summary>Что подготовить для консультации?</summary><p>Кратко изложите обстоятельства и сформулируйте вопрос. Если есть договор, переписка, претензия или другой документ, сообщите об этом. Способ передачи и перечень документов согласуем отдельно.</p></details>
-  <details><summary>Как узнать стоимость?</summary><p>Позвоните и опишите задачу. Стоимость и объём работы согласуются после уточнения обстоятельств и до начала оказания услуги.</p></details>
-  <details><summary>Как проходит консультация?</summary><p>При обращении согласуем время и удобный формат. Для содержательного разбора может потребоваться предварительное изучение документов.</p></details>
+  <details><summary>С чем можно обратиться?</summary><p>С вопросами по договорам, трудовым отношениям, недвижимости, претензиям и судебной работе. Для первого звонка достаточно назвать тему вопроса.</p></details>
+  <details><summary>Что подготовить для консультации?</summary><p>Подготовьте договор и приложения к нему, переписку, уведомления или претензии по вашему вопросу. Для трудового спора — трудовой договор, приказы и расчётные листки; для недвижимости — договор и документы на объект. Запишите даты событий и вопросы, на которые хотите получить ответ.</p></details>
+  <details><summary>Как узнать стоимость?</summary><p>Консультация — от 1 500 ₽, проверка документа — от 3 000 ₽, судебное сопровождение — от 15 000 ₽. Итоговая цена зависит от сложности и объёма документов. До начала работы вы узнаете стоимость вашей задачи.</p></details>
+  <details><summary>Что разобрать на консультации?</summary><p>Обстоятельства и документы по вашему вопросу, обязанности сторон и возможные дальнейшие действия. Заранее выпишите, что произошло и какой результат хотите получить.</p></details>
   <details><summary>Можно обратиться по вопросу бизнеса?</summary><p>Да. В профессиональном опыте — сопровождение коммерческих и бюджетных организаций, договорная и кадровая работа, закупки, строительство, транспорт и здравоохранение.</p></details>
-  <details><summary>Нужны ли все документы для первого звонка?</summary><p>Для первого контакта достаточно назвать тему. Не отправляйте паспортные данные и подробности дела в коротком сообщении: необходимые материалы и способ их передачи можно согласовать отдельно.</p></details>
+  <details><summary>Нужны ли все документы для первого звонка?</summary><p>Нет. Достаточно назвать тему и коротко описать вопрос. Подготовленные документы пригодятся для самой консультации.</p></details>
 </div></section>
-<section class="contact section" id="contact" aria-labelledby="contact-title"><div class="contact-copy" data-reveal><p class="eyebrow">06 / Давайте обсудим</p><h2 id="contact-title">Начните<br>с <em>вашего вопроса.</em></h2><p>Светлана Валерьевна Якунина<br>Юридические консультации · Бузулук</p><a class="contact-phone" href="tel:+79228921257">+7 922 892-12-57</a><div class="contact-channel-buttons"><a class="button button-light" href="tel:+79228921257">Позвонить</a><button class="button button-light" type="button" data-open-max>Написать в MAX</button></div><p class="max-help">MAX по номеру <strong>+7 922 892-12-57</strong><br>В MAX откройте «Контакты» → «Найти по номеру» и введите этот номер.</p><p class="contact-small">Время и формат консультации согласуем при обращении.</p></div>
-  <div class="contact-draft" data-reveal><h3>Подготовить обращение</h3><p>Выберите тему — получите короткий текст для первого контакта.</p><form id="draft-form"><label for="topic">Тема вопроса</label><select id="topic" name="topic"><option>Договоры и сделки</option><option>Трудовые вопросы</option><option>Недвижимость и аренда</option><option>Претензии и судебная работа</option><option>Юридическая помощь бизнесу</option><option>Другой вопрос</option></select><label for="format">Формат помощи</label><select id="format" name="format"><option>Консультация</option><option>Работа с документами</option><option>Сопровождение</option></select><button class="button button-light" type="submit">Подготовить сообщение</button></form><div id="draft-result" hidden><label for="message">Текст обращения — можно изменить</label><textarea id="message" rows="4"></textarea><div class="draft-actions"><button class="text-link" id="copy-message" type="button">Скопировать текст</button><button class="text-link" type="button" data-open-max>Связаться в MAX</button><a class="text-link" id="sms-link" href="sms:+79228921257">Открыть SMS</a></div><p id="draft-status" role="status" aria-live="polite"></p></div><p class="privacy-note">Текст готовится в вашем браузере и не отправляется через сайт. Отправку SMS вы подтверждаете в приложении сообщений.</p><noscript><p>Для подготовки текста включите JavaScript или позвоните по указанному номеру.</p></noscript></div>
+<section class="contact section" id="contact" aria-labelledby="contact-title">
+  <div class="contact-copy" data-reveal><p class="eyebrow">06 / Связаться с юристом</p><h2 id="contact-title">Обсудим<br><em>ваш вопрос.</em></h2><p>Светлана Валерьевна Якунина<br>Юридические консультации · Бузулук</p><a class="contact-phone" href="tel:+79228921257">+7 922 892-12-57</a><div class="contact-channel-buttons"><a class="button button-light" href="tel:+79228921257">Позвонить</a><a class="button button-outline contact-write" href="sms:+79228921257">Написать SMS</a><a class="button button-outline" data-profile-max hidden>Написать в MAX</a><a class="button button-outline" data-profile-telegram hidden>Telegram</a></div><dl id="practice-facts" class="practice-facts" hidden></dl><button class="text-link" type="button" data-open-chat data-local-only>Предварительно задать вопрос онлайн</button></div>
+  <div class="contact-draft callback-card" id="callback" data-reveal><p class="eyebrow">Обратный звонок</p><h3>Оставьте номер.<br>Расскажите о вопросе голосом.</h3><p class="callback-promise" hidden></p>
+  <form id="callback-form"><label for="callback-name">Ваше имя</label><input id="callback-name" name="name" maxlength="80" autocomplete="given-name" required placeholder="Как к вам обращаться"><label for="callback-phone">Телефон</label><input id="callback-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="25" required placeholder="+7 ___ ___-__-__"><input name="website" class="lead-trap" tabindex="-1" aria-hidden="true" autocomplete="off"><label class="lead-consent"><input name="consent" type="checkbox" required>Согласен передать имя и телефон юристу для ответа на обращение. <a href="privacy.html" target="_blank" rel="noopener">Условия обработки</a></label><button class="button" type="submit">Заказать звонок</button><p class="callback-status" role="status"></p></form>
+  <div id="callback-offline" hidden><p>Обратный звонок через сайт пока недоступен. Можно позвонить или отправить просьбу о звонке по SMS.</p><a class="button" href="sms:+79228921257?body=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!%20%D0%9F%D1%80%D0%BE%D1%88%D1%83%20%D0%BF%D0%B5%D1%80%D0%B5%D0%B7%D0%B2%D0%BE%D0%BD%D0%B8%D1%82%D1%8C%20%D0%BC%D0%BD%D0%B5%20%D0%BF%D0%BE%20%D1%8E%D1%80%D0%B8%D0%B4%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%BE%D0%BC%D1%83%20%D0%B2%D0%BE%D0%BF%D1%80%D0%BE%D1%81%D1%83.">Попросить о звонке по SMS</a><p class="privacy-note">Сообщение отправляется в вашем приложении SMS после подтверждения.</p></div>
+  </div>
 </section>
 </main>
-<button class="chat-launcher" type="button" data-open-chat aria-label="Открыть чат вопросов"><span class="chat-symbol" aria-hidden="true">✎</span><span>Задать вопрос<small>Юридическая помощь</small></span></button>
+
 <dialog class="chat-dialog" id="consult-chat" aria-labelledby="chat-heading" data-lenis-prevent>
   <div class="chat-header"><div><span class="chat-label">Юридическая помощь</span><h2 id="chat-heading">Задать вопрос</h2></div><button type="button" class="chat-close" aria-label="Закрыть чат">×</button></div>
 
@@ -94,5 +98,6 @@
 
 </dialog>
 
+<nav class="mobile-actions" aria-label="Быстрая связь"><a href="tel:+79228921257">Позвонить</a><a class="contact-write" href="sms:+79228921257">Написать</a><a href="#callback" data-callback-open>Заказать звонок</a></nav>
 <footer class="footer"><a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">Я.</span><span>Светлана Якунина<small>Юридические консультации</small></span></a><p>Бузулук · Договоры, трудовое право, недвижимость</p><span>© 2026 Светлана Якунина · <a href="privacy.html">Обработка заявок</a></span></footer>
 </body></html>
