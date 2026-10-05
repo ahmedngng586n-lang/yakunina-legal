@@ -56,7 +56,14 @@ h2{font-size:clamp(30px,8.4vw,37px)}.section-heading>p{font-size:15px}.practice-
 @media(max-width:680px){.practice-card>.card-category{font-size:10px!important;line-height:1.5!important}.card-top{top:22px}.practice-card h3{overflow-wrap:break-word}}
 
 /* Compact phone layout. Details remain available, while desktop stays unchanged. */
+.analytics-choice{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:min(430px,calc(100vw - 48px));padding:22px;border-radius:10px;box-shadow:0 8px 28px #173f351a}
+.analytics-choice p{grid-column:1/-1;margin:0;line-height:1.6;overflow-wrap:break-word}
+.analytics-choice>a{grid-column:1/-1;justify-self:start;margin:0;padding:0;font-size:13px;line-height:1.5}
+.analytics-choice>button{display:flex;align-items:center;justify-content:center;min-height:44px;margin:0;padding:10px 12px;font-size:14px;line-height:1.4}
+.analytics-choice>button:first-of-type{background:var(--pine);border-color:var(--pine);color:var(--paper)}
+.analytics-choice>button:hover{border-color:var(--pine)}
 @media(max-width:680px){
+.analytics-choice{width:calc(100vw - 24px);padding:16px;gap:10px}.analytics-choice>button{padding:10px 8px;font-size:13px}
 .header{min-height:72px;padding:14px 20px}.brand{gap:10px;font-size:15px}.brand-mark{width:36px;height:40px;font-size:29px}.brand small{font-size:8px;letter-spacing:.08em}
 .hero-copy{padding:24px 20px 20px}.hero-copy .eyebrow{margin-bottom:12px}.hero-copy h1{font-size:clamp(28px,8.2vw,35px);line-height:1.12}.hero-description{font-size:14px!important;line-height:1.55;margin-top:14px}.hero-actions{margin:16px 0 12px}.hero-actions .button{min-height:46px;padding:11px 16px}.hero-actions .text-link{display:none}.hero-note{gap:4px 10px;font-size:11px;line-height:1.5}.hero-note>span:first-child{padding-right:10px}
 .hero-visual{height:110px;min-height:110px;margin:0 20px 16px;border-radius:5px}.hero-visual-label{bottom:15px;left:16px;gap:10px;font-size:14px;line-height:1.4}.experience-badge{top:12px;padding:10px 14px}.experience-badge>strong{font-size:32px}.experience-badge>strong span{font-size:13px}.experience-badge p{font-size:8px;margin-top:4px}.trust-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:12px 20px}.trust-strip p{font-size:10px;line-height:1.5}.trust-strip span{display:none}
