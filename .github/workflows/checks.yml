@@ -1,0 +1,30 @@
+name: Verify landing and CRM
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test lead and Telegram handling
+        run: python -m unittest discover -s server -p 'test_*.py' -v
+      - name: Verify JavaScript syntax
+        run: |
+          for source in dist/assets/app.js dist/assets/callback.js dist/assets/marketing.js dist/assets/site-config.js; do
+            node --check "$source"
+          done
+      - name: Verify static preview matches application
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          for source in Path('dist').rglob('*'):
+              if source.is_file():
+                  target = Path('docs') / source.relative_to('dist')
+                  assert target.is_file() and source.read_bytes() == target.read_bytes(), str(source)
+          PY

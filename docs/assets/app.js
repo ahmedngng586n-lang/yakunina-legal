@@ -1,82 +1,172 @@
 'use strict';
 (() => {
-  const staticPreview=location.hostname.endsWith('.github.io');
-  const sourceTags={};
-  const query=new URLSearchParams(location.search);
-  try{Object.assign(sourceTags,JSON.parse(sessionStorage.getItem('legal_source')||'{}'));}catch{}
-  for(const key of ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','yclid']){if(query.has(key))sourceTags[key]=query.get(key).slice(0,180);}
-  try{sessionStorage.setItem('legal_source',JSON.stringify(sourceTags));}catch{}
-  function track(name){if(window.LEGAL_METRIKA_ID&&typeof window.ym==='function')window.ym(window.LEGAL_METRIKA_ID,'reachGoal',name);}
-  document.querySelectorAll('a[href^="tel:"]').forEach(el=>el.addEventListener('click',()=>track('phone_click')));
-  document.querySelectorAll('[data-open-max],a[href*="web.max.ru"]').forEach(el=>el.addEventListener('click',()=>track('messenger_click')));
-  const menu = document.querySelector('.menu-toggle');
-  const navigation = document.querySelector('.nav');
-  const closeMenu = () => { menu.setAttribute('aria-expanded','false'); menu.setAttribute('aria-label','Открыть меню'); navigation.classList.remove('open'); };
-  menu.addEventListener('click', () => { const open = menu.getAttribute('aria-expanded') !== 'true'; menu.setAttribute('aria-expanded',String(open)); menu.setAttribute('aria-label',open?'Закрыть меню':'Открыть меню'); navigation.classList.toggle('open',open); });
-  navigation.querySelectorAll('a').forEach(a => a.addEventListener('click',closeMenu));
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();}});
-  let lenis, context, observer, ticker;
-  const goContact=()=>{if(lenis)lenis.scrollTo('#contact',{offset:-30});else document.getElementById('contact').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});};
-  document.querySelectorAll('[data-service],[data-format]').forEach(button=>button.addEventListener('click',goContact));
-  const chat=document.getElementById('consult-chat'), log=document.getElementById('chat-log'), choices=document.getElementById('chat-choices'), chatInput=document.getElementById('chat-input');
-  const sendButton=document.getElementById('ai-send');
-  let lastLauncher, aiBusy=false, aiController, aiHistory=[], aiTurns=0, bookingOffered=false, contactPrompted=false;
-  function renderAnswer(el,text){el.replaceChildren();text.split(/(\*\*[^*]+\*\*)/g).forEach(part=>{if(part.startsWith('**')&&part.endsWith('**')){const strong=document.createElement('strong');strong.textContent=part.slice(2,-2);el.append(strong);}else el.append(document.createTextNode(part));});}
-  function bubble(text,user=false){const el=document.createElement('div');el.className='chat-bubble'+(user?' user':'');el.textContent=text;log.append(el);log.scrollTop=log.scrollHeight;return el;}
-  function option(label,action){const el=document.createElement('button');el.type='button';el.textContent=label;el.addEventListener('click',action);choices.append(el);}
-  async function copyText(value){try{await navigator.clipboard.writeText(value);return true;}catch{const field=document.createElement('textarea');field.value=value;field.className='clipboard-field';(chat.open?chat:document.body).append(field);field.select();const copied=document.execCommand('copy');field.remove();return copied;}}
-  function openChat(launcher){track('chat_open');lastLauncher=launcher;if(!chat.open){chat.showModal();if(lenis)lenis.stop();}}
-  function contactChoice(){choices.replaceChildren();if(aiTurns>=3&&!bookingOffered){const question=aiHistory.filter(item=>item.role==='user').map(item=>item.content).join(' ');const goal=guessGoal(question);const short=question.trim().split(/\s+/).slice(0,20).join(' ').slice(0,140);const card=summaryCard('Ваш вопрос',goal,short);card.classList.add('chat-summary');log.append(card);bookingOffered=true;}option('Новый разговор',()=>{if(aiBusy)return;aiHistory=[];aiTurns=0;bookingOffered=false;contactPrompted=false;log.replaceChildren();greeting();});log.scrollTop=log.scrollHeight;}
-  function greeting(){if(staticPreview){bubble('Чтобы задать вопрос или записаться на консультацию, позвоните или отправьте сообщение в MAX. Онлайн-переписка пока недоступна.');log.append(staticBooking('Здравствуйте! Хочу задать юридический вопрос. Подскажите время и стоимость консультации.'));chatInput.closest('form').style.display='none';document.querySelector('.chat-disclosure').textContent='Обращение готовится в браузере. Отправку сообщения вы подтверждаете самостоятельно.';return;}bubble('Здравствуйте! Задайте вопрос по договорам, работе, недвижимости или судебному спору.');choices.replaceChildren();}
-  greeting();
-  async function askAI(){const value=chatInput.value.trim();if(!value||aiBusy)return;if(location.protocol==='file:'){bubble('Для работы ИИ откройте сайт через локальный сервер. Файл HTML поддерживает форму записи и контакты.');contactChoice();return;}
-    const wantsConsultation=/консультац|записа|запиш|связаться с юрист|позвоните|обратный звонок/i.test(value);
-    aiBusy=true;sendButton.textContent='Стоп';chatInput.value='';choices.replaceChildren();bubble(value,true);const answer=bubble('Готовлю ответ…');answer.classList.add('pending');let result='',complete=false;
-    aiController=new AbortController();const timeout=setTimeout(()=>aiController.abort(),45000);
-    try{const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json','X-Legal-Chat':'1'},body:JSON.stringify({messages:[...aiHistory.slice(-10),{role:'user',content:value}],turn_count:aiTurns+1}),signal:aiController.signal});
-      if(!response.ok){const error=await response.json().catch(()=>({error:'Не удалось связаться с ИИ.'}));throw new Error(error.error);}
-      if(!response.body)throw new Error('Поток ответов недоступен в этом браузере.');const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='';
-      while(true){const packet=await reader.read();buffer+=decoder.decode(packet.value||new Uint8Array(),{stream:!packet.done});const events=buffer.split('\n\n');buffer=events.pop();for(const event of events){if(!event.startsWith('data: '))continue;const data=JSON.parse(event.slice(6));if(data.error)throw new Error(data.error);if(data.text){result+=data.text;answer.textContent=result;answer.classList.remove('pending');log.scrollTop=log.scrollHeight;}if(data.done)complete=true;}if(packet.done)break;}
-      if(!result)throw new Error('ИИ не вернул текст. Попробуйте ещё раз.');if(!complete)throw new Error('Ответ прерван. Можно задать вопрос ещё раз.');renderAnswer(answer,result);aiTurns++;track('chat_answer');aiHistory.push({role:'user',content:value},{role:'assistant',content:result});
-    }catch(error){answer.textContent=result?result+'\n\n[Ответ прерван]':error.name==='AbortError'?'Ответ остановлен. Можно повторить вопрос или связаться с юристом.':error.message;answer.classList.remove('pending');if(!result)chatInput.value=value;
-    }finally{clearTimeout(timeout);aiBusy=false;sendButton.textContent='Спросить';contactChoice();if(wantsConsultation&&!contactPrompted&&!document.querySelector('#chat-log .lead-form')){const draft=aiHistory.filter(item=>item.role==='user').map(item=>item.content).join(' ').slice(0,1500)||value;log.append(bookingBlock(draft,{topic:'Консультация из чата',goal:guessGoal(draft),description:draft}));contactPrompted=true;log.scrollTop=log.scrollHeight;}}
+  const config = window.LEGAL_SITE || {};
+  const read = key => { try { return sessionStorage.getItem(key); } catch { return null; } };
+  const save = (key, value) => { try { sessionStorage.setItem(key, value); } catch {} };
+  const uid = () => typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : 'request-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+  let sessionId = read('legal_session');
+  if (!sessionId || !/^[a-zA-Z0-9_-]{10,80}$/.test(sessionId)) { sessionId = uid(); save('legal_session', sessionId); }
+  let token = read('legal_conversation_token') || '';
+  const source = {};
+  try { Object.assign(source, JSON.parse(read('legal_source') || '{}')); } catch {}
+  const query = new URLSearchParams(location.search);
+  for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'yclid']) {
+    if (query.has(key)) source[key] = query.get(key).slice(0, 180);
   }
-  document.getElementById('chat-form').addEventListener('submit',event=>{event.preventDefault();if(aiBusy){aiController.abort();return;}askAI();});
-  chatInput.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();if(!aiBusy)askAI();}});
-  document.querySelectorAll('[data-open-chat]').forEach(el=>el.addEventListener('click',()=>openChat(el)));
-  
-  chat.querySelector('.chat-close').addEventListener('click',()=>chat.close());chat.addEventListener('close',()=>{if(lenis)lenis.start();if(lastLauncher)lastLauncher.focus({preventScroll:true});});
-  chat.addEventListener('click',event=>{if(event.target===chat){const box=chat.getBoundingClientRect();if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)chat.close();}});
-  const wizard=document.getElementById('wizard');
-  const wizardState={step:0,topic:'',goal:'',detail:''};
-  const goals={'Консультация':'от 1 500 ₽','Проверка документа':'от 3 000 ₽','Договор или претензия':'от 4 000 ₽','Исковое заявление':'от 5 000 ₽','Судебное сопровождение':'от 15 000 ₽'};
-  function element(tag,text,cls){const el=document.createElement(tag);if(text)el.textContent=text;if(cls)el.className=cls;return el;}
-  function action(label,handler,cls='wizard-option'){const button=element('button',label,cls);button.type='button';button.addEventListener('click',handler);return button;}
-  function guessGoal(text){if(/иск(овое|ового|овое заявление)|составить иск|подготовить иск/i.test(text))return 'Исковое заявление';if(/представитель|сопровожд.*суд|вести дело/i.test(text))return 'Судебное сопровождение';if(/составить|подготовить|претензи/i.test(text))return 'Договор или претензия';if(/провер(ить|ка|ки)|экспертиз/i.test(text))return 'Проверка документа';return 'Консультация';}
-  function bookingBlock(draft,details={}){if(staticPreview)return staticBooking(draft);const block=element('div',null,'booking-block');track('lead_form_open');block.append(element('p','Оставьте контакт — заявка на консультацию поступит юристу.'));const form=element('form',null,'lead-form');const nameLabel=element('label','Как к вам обращаться');const name=element('input');name.name='name';name.required=true;name.maxLength=80;name.autocomplete='given-name';name.placeholder='Ваше имя';name.setAttribute('aria-label','Имя для заявки');nameLabel.append(name);const contactLabel=element('label','Телефон, Telegram или email');const contact=element('input');contact.name='contact';contact.required=true;contact.maxLength=120;contact.placeholder='+7… / @username / email';contact.autocomplete='tel';contact.setAttribute('aria-label','Контакт для заявки');contactLabel.append(contact);const noteLabel=element('label','Ваш запрос');const note=element('textarea');note.rows=3;note.maxLength=1500;note.value=details.description||draft;note.setAttribute('aria-label','Запрос для заявки');noteLabel.append(note);const trap=element('input');trap.name='website';trap.className='lead-trap';trap.tabIndex=-1;trap.autocomplete='off';trap.setAttribute('aria-hidden','true');const consentLabel=element('label',null,'lead-consent');const consent=element('input');consent.type='checkbox';consent.required=true;consent.setAttribute('aria-label','Согласие на передачу заявки');const policy=element('a','Условия обработки заявки');policy.href='privacy.html';policy.target='_blank';policy.rel='noopener';consentLabel.append(consent,document.createTextNode('Согласен передать имя, контакт и запрос юристу через Telegram для ответа на обращение. '),policy);const send=element('button','Отправить заявку','button');send.type='submit';const status=element('p','', 'booking-status');status.setAttribute('role','status');const requestId=typeof crypto.randomUUID==='function'?crypto.randomUUID():String(Date.now())+'-'+Math.random().toString(36).slice(2);form.append(nameLabel,contactLabel,noteLabel,trap,consentLabel,send,status);form.addEventListener('submit',async event=>{event.preventDefault();if(send.disabled)return;send.disabled=true;send.textContent='Отправляем…';try{const response=await fetch('/api/lead',{method:'POST',headers:{'Content-Type':'application/json','X-Legal-Chat':'1'},body:JSON.stringify({request_id:requestId,name:name.value.trim(),contact:contact.value.trim(),topic:details.topic||'Консультация',goal:details.goal||'Консультация',description:note.value.trim(),consent:consent.checked,website:trap.value,source:sourceTags,channel:form.closest('#chat-log')?'chat':'wizard'})});const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error||'Заявка не отправлена.');track('lead_submit');status.textContent=data.delivery==='sent'?'Заявка передана юристу. С вами свяжутся для согласования консультации.':'Заявка сохранена. Передача уведомления задерживается; для срочного вопроса позвоните.';send.textContent='Заявка принята';}catch(error){status.textContent=error.message||'Не удалось отправить. Позвоните или напишите в MAX.';send.disabled=false;send.textContent='Повторить отправку';}});block.append(form);const fallback=element('details',null,'lead-fallback');fallback.append(element('summary','Связаться напрямую'));fallback.append(action('Скопировать обращение',async()=>{status.textContent=await copyText(draft)?'Текст скопирован. Отправьте его удобным способом.':'Скопируйте текст вручную.';}));fallback.append(element('strong','+7 922 892-12-57'));const links=element('div',null,'booking-links');for(const [title,href] of [['Написать SMS','sms:+79228921257?body='+encodeURIComponent(draft)],['Позвонить','tel:+79228921257']]){const a=element('a',title);a.href=href;if(href.startsWith('https:')){a.target='_blank';a.rel='noopener noreferrer';}a.addEventListener('click',()=>track(href.startsWith('tel:')?'phone_click':'messenger_click'));links.append(a);}fallback.append(links);block.append(fallback);return block;}
-  function staticBooking(draft){const block=element('div',null,'booking-block');block.append(element('p','Записаться можно по телефону или сообщением.'),element('strong','+7 922 892-12-57'));const links=element('div',null,'booking-links');for(const [label,href] of [['Написать SMS','sms:+79228921257?body='+encodeURIComponent(draft)],['Позвонить','tel:+79228921257']]){const a=element('a',label);a.href=href;a.addEventListener('click',()=>track(href.startsWith('tel:')?'phone_click':'sms_click'));links.append(a);}block.append(links);return block;}
-  function summaryCard(selectedTopic,goal,detail){const card=element('div',null,'summary-card');card.append(element('p','Краткая сводка','summary-overline'),element('h3',selectedTopic),element('p',detail||'Подробности обсудим на консультации.','summary-detail'),element('p','Формат: '+goal),element('strong',goals[goal]||goals['Консультация'],'summary-price'),element('p','Начальная цена. Окончательная стоимость зависит от объёма задачи.','summary-note'));const draft=`Здравствуйте! Хочу записаться. Тема: ${selectedTopic}. Формат: ${goal}. ${detail?'Мой вопрос: '+detail:''} Подскажите удобное время и точную стоимость.`;card.append(action('Записаться',event=>{event.currentTarget.remove();card.append(bookingBlock(draft,{topic:selectedTopic,goal,description:detail}));if(card.closest('#chat-log'))log.scrollTop=log.scrollHeight;},'button summary-book'));return card;}
-  function renderWizard(){wizard.replaceChildren();const step=wizardState.step;wizard.append(element('p',step===0?'С чего начнём?':step<3?`Шаг ${step+1} из 3`:'Готово — формат и стоимость','wizard-progress'));if(step===0){wizard.append(element('h2','Выберите вашу ситуацию'),element('p','Первый шаг — понять, какая помощь вам нужна.'));const situations=[['Вопрос по работе','Трудовые вопросы'],['Нужно проверить договор','Договоры и сделки'],['Вопрос по недвижимости','Недвижимость и аренда'],['Претензия или судебный спор','Претензии и судебная работа']];for(const [label,name] of situations)wizard.append(action(label,()=>{wizardState.topic=name;wizardState.step=1;track('wizard_start');renderWizard();}));}else if(step===1){wizard.append(element('h2','Какая помощь нужна?'));for(const name of Object.keys(goals))wizard.append(action(name,()=>{wizardState.goal=name;wizardState.step=2;renderWizard();}));}else if(step===2){wizard.append(element('h2','Коротко о ситуации'),element('p','Что произошло и какой результат нужен? Можно пропустить.'));const field=element('textarea');field.id='wizard-detail';field.maxLength=1000;field.rows=3;field.value=wizardState.detail;field.placeholder='Опишите вопрос без личных данных';field.setAttribute('aria-label','Описание ситуации');field.addEventListener('input',()=>wizardState.detail=field.value);wizard.append(field,action('Показать сводку и цену',()=>{wizardState.step=3;track('wizard_complete');renderWizard();},'button'));}else wizard.append(summaryCard(wizardState.topic,wizardState.goal,wizardState.detail));if(step>0)wizard.append(action('Назад',()=>{wizardState.step--;renderWizard();},'wizard-back'));wizard.closest('.hero-question-panel').scrollTop=0;}
-  renderWizard();
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
-  function stopMotion(){if(observer)observer.disconnect();if(context)context.revert();if(window.gsap&&ticker)gsap.ticker.remove(ticker);if(lenis){lenis.destroy();lenis=null;}document.querySelectorAll('.animate').forEach(el=>el.classList.remove('animate'));}
-  function startMotion(){
-    if(reduce.matches||!window.gsap||!window.ScrollTrigger)return;
-    gsap.registerPlugin(ScrollTrigger);
-    context=gsap.context(()=>{
-      gsap.timeline({defaults:{ease:'power3.out'}}).from('[data-intro]',{y:20,duration:.9,stagger:.08,clearProps:'transform'});
-      document.querySelectorAll('[data-reveal]').forEach(el=>{gsap.from(el,{y:26,duration:.85,ease:'power3.out',clearProps:'transform',scrollTrigger:{trigger:el,start:'top 90%',once:true}});});
-      gsap.to('.progress',{scaleX:1,ease:'none',scrollTrigger:{trigger:document.body,start:'top top',end:'bottom bottom',scrub:.2}});
-    });
-    if(window.Lenis&&!matchMedia('(pointer: coarse)').matches){lenis=new Lenis({lerp:.09,smoothWheel:true,anchors:{offset:-28}});lenis.on('scroll',ScrollTrigger.update);ticker=time=>lenis.raf(time*1000);gsap.ticker.add(ticker);gsap.ticker.lagSmoothing(0);}
-    observer=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('animate');observer.unobserve(entry.target);}});},{threshold:.2});
-    document.querySelectorAll('.business-note').forEach(el=>{el.classList.add('animate-on-scroll');observer.observe(el);});
-    ScrollTrigger.refresh();
+  save('legal_source', JSON.stringify(source));
+  // GitHub Pages uses the configured HTTPS gateway; the server and localhost use their own origin.
+  let apiBase = '';
+  if (location.hostname.endsWith('.github.io') && config.apiBaseUrl) {
+    try { const value = new URL(config.apiBaseUrl); if (value.protocol === 'https:') apiBase = value.origin; } catch {}
   }
-  // Lenis is the sole smooth-scroll engine. Native scrolling stays available on touch and reduced motion.
-  startMotion();reduce.addEventListener('change',()=>{stopMotion();startMotion();});
-  window.addEventListener('load',()=>{if(window.ScrollTrigger)ScrollTrigger.refresh();});
-  if(document.fonts)document.fonts.ready.then(()=>{if(window.ScrollTrigger)ScrollTrigger.refresh();});
-  window.addEventListener('pagehide',stopMotion);
-  window.addEventListener('pageshow',event=>{if(event.persisted)startMotion();});
+  const apiUrl = path => apiBase + path;
+  async function request(path, body, options = {}) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), options.timeout || 12000);
+    try {
+      const headers = { ...(body ? { 'Content-Type': 'application/json', 'X-Legal-Chat': '1' } : {}), ...(options.headers || {}) };
+      const response = await fetch(apiUrl(path), { method: body ? 'POST' : 'GET', headers, ...(body ? { body: JSON.stringify(body) } : {}), signal: controller.signal, cache: 'no-store', credentials: 'omit' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok !== true) { const error = new Error(data.error || 'Сервис временно недоступен. Попробуйте ещё раз или позвоните.'); error.status = response.status; throw error; }
+      return data;
+    } catch (error) {
+      if (error.name === 'AbortError') throw new Error('Не удалось подтвердить получение. Повторите отправку или позвоните.');
+      if (error instanceof TypeError) throw new Error('Нет связи с сервисом. Проверьте подключение и повторите отправку.');
+      throw error;
+    } finally { clearTimeout(timer); }
+  }
+  const client = window.LegalClient = { uid, source, sessionId, apiUrl, request, config, capabilities: {}, available: false,
+    conversation: () => ({ session_id: sessionId, ...(token ? { conversation_token: token } : {}) }),
+    selectContext: detail => document.dispatchEvent(new CustomEvent('legal:context', { detail })) };
+  client.ready = location.protocol === 'file:' ? Promise.resolve(false) : request('/api/health', null, { timeout: 5000 }).then(data => {
+    client.available = true; client.capabilities = data.capabilities || {}; return true;
+  }).catch(() => false);
+
+  const menu = document.querySelector('.menu-toggle'), nav = document.getElementById('navigation');
+  function closeMenu() { nav.classList.remove('open'); menu.setAttribute('aria-expanded', 'false'); menu.setAttribute('aria-label', 'Открыть меню'); }
+  menu.addEventListener('click', () => { const open = !nav.classList.contains('open'); nav.classList.toggle('open', open); menu.setAttribute('aria-expanded', String(open)); menu.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню'); });
+  nav.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && nav.classList.contains('open')) { closeMenu(); menu.focus(); } });
+  document.querySelectorAll('[data-topic],[data-goal]').forEach(link => link.addEventListener('click', () => client.selectContext({ topic: link.dataset.topic, goal: link.dataset.goal })));
+
+  const dialog = document.getElementById('consult-chat'), humanPane = document.getElementById('human-pane'), aiPane = document.getElementById('ai-pane');
+  const tabs = document.querySelector('.chat-tabs'), humanTab = document.getElementById('human-tab'), aiTab = document.getElementById('ai-tab');
+  const form = document.getElementById('chat-form'), input = document.getElementById('chat-input'), send = document.getElementById('chat-send');
+  const log = document.getElementById('chat-log'), status = document.getElementById('chat-status');
+  let launcher, pollTimer, pollBusy = false, sending = false, pendingMessage, selectedPane = 'human';
+  const knownMessages = new Set(), userTexts = [];
+  function message(parent, text, role, created = '') {
+    parent.querySelector('.chat-welcome')?.remove();
+    const item = document.createElement('div'); item.className = 'chat-message' + (role === 'user' ? ' user' : '');
+    const label = document.createElement('p'); label.className = 'chat-message-label'; label.textContent = role === 'user' ? 'Вы' : role === 'lawyer' ? 'Светлана Якунина · юрист' : 'ИИ-помощник';
+    if (created) { const date = new Date(created); if (!Number.isNaN(date.getTime())) label.textContent += ' · ' + date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }); }
+    const bubble = document.createElement('div'); bubble.className = 'chat-bubble'; bubble.textContent = text;
+    item.append(label, bubble); parent.append(item); parent.scrollTop = parent.scrollHeight; return item;
+  }
+  function setPane(name) {
+    selectedPane = name; humanPane.hidden = name !== 'human'; aiPane.hidden = name !== 'ai';
+    humanTab.setAttribute('aria-selected', String(name === 'human')); aiTab.setAttribute('aria-selected', String(name === 'ai'));
+    humanTab.tabIndex = name === 'human' ? 0 : -1; aiTab.tabIndex = name === 'ai' ? 0 : -1;
+    document.getElementById('chat-heading').textContent = name === 'human' ? 'Написать юристу' : 'ИИ-помощник';
+    if (name === 'human') poll();
+  }
+  humanTab.addEventListener('click', () => setPane('human')); aiTab.addEventListener('click', () => setPane('ai'));
+  tabs.addEventListener('keydown', event => { if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const name = event.key === 'Home' ? 'human' : event.key === 'End' ? 'ai' : selectedPane === 'human' ? 'ai' : 'human'; setPane(name); (name === 'human' ? humanTab : aiTab).focus(); } });
+  async function poll() {
+    if (!dialog.open || document.hidden || selectedPane !== 'human' || !token || !client.capabilities.human_chat || pollBusy) return;
+    pollBusy = true;
+    try {
+      const data = await request('/api/conversation?session_id=' + encodeURIComponent(sessionId), null, { headers: { Authorization: 'Bearer ' + token }, timeout: 9000 });
+      for (const item of data.messages || []) {
+        if (knownMessages.has(item.id)) continue; knownMessages.add(item.id);
+        message(log, item.text, item.role, item.created); if (item.role === 'user') userTexts.push(item.text);
+      }
+      if (data.lead_status && data.lead_status !== 'new') {
+        const labels = { contacted: 'Юрист связался с вами по обращению.', consultation: 'Заявка переведена на этап консультации. Время уточните у юриста.', closed: 'Обращение закрыто юристом.' };
+        if (labels[data.lead_status]) status.textContent = labels[data.lead_status];
+      }
+      if (status.dataset.pollError === '1') { status.textContent = 'Связь восстановлена. Ответы появятся в этом чате.'; delete status.dataset.pollError; }
+    } catch (error) {
+      status.textContent = error.status === 403 ? 'История этого чата недоступна. Для продолжения свяжитесь по телефону или оставьте заявку.' : 'Обновление переписки временно недоступно. Попробуем снова; для срочного вопроса позвоните.';
+      status.dataset.pollError = '1';
+    } finally { pollBusy = false; }
+  }
+  function openChat(button) {
+    launcher = button; setPane('human');
+    if (!dialog.open) { dialog.showModal(); document.body.classList.add('modal-open'); }
+    if (client.capabilities.human_chat) input.focus({ preventScroll: true });
+    poll(); clearInterval(pollTimer); pollTimer = setInterval(poll, 6000);
+  }
+  document.querySelectorAll('[data-open-chat]').forEach(button => button.addEventListener('click', () => openChat(button)));
+  dialog.querySelector('.chat-close').addEventListener('click', () => dialog.close());
+  dialog.addEventListener('close', () => { document.body.classList.remove('modal-open'); clearInterval(pollTimer); launcher?.focus({ preventScroll: true }); });
+  dialog.addEventListener('click', event => { if (event.target !== dialog) return; const rect = dialog.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close(); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+  client.ready.then(available => {
+    const human = available && client.capabilities.human_chat;
+    form.hidden = !human; document.getElementById('chat-offline').hidden = human;
+    if (!human) { log.hidden = true; humanPane.querySelector('.chat-disclosure').hidden = true; }
+    tabs.hidden = !client.capabilities.ai;
+    if (dialog.open && human) input.focus({ preventScroll: true });
+    if (token && human) document.getElementById('chat-consent').checked = read('legal_chat_consent') === '2026-10-05';
+  });
+  // Opening a dialog alone sends no event. Start is logged only after a visitor consents and presses Send.
+  async function started() {
+    if (read('legal_chat_started') === sessionId) return;
+    try { await request('/api/events', { event: 'chat_started', session_id: sessionId, request_id: uid(), consent: true, source }); save('legal_chat_started', sessionId); } catch {}
+  }
+  form.addEventListener('submit', async event => {
+    event.preventDefault(); if (sending || !client.capabilities.human_chat || !form.reportValidity()) return;
+    const text = input.value.trim(); if (!text && !pendingMessage) { input.focus(); return; }
+    if (!document.getElementById('chat-consent').checked) return;
+    if (!pendingMessage) pendingMessage = { request_id: uid(), text };
+    sending = true; send.disabled = true; input.readOnly = true; send.textContent = 'Отправляем…'; status.textContent = '';
+    try {
+      await started();
+      const data = await request('/api/messages', { ...client.conversation(), ...pendingMessage, consent: true });
+      token = data.conversation_token; save('legal_conversation_token', token); save('legal_chat_consent', '2026-10-05');
+      if (!knownMessages.has(data.id)) { knownMessages.add(data.id); message(log, pendingMessage.text, 'user'); userTexts.push(pendingMessage.text); }
+      input.value = ''; pendingMessage = null; input.readOnly = false;
+      status.textContent = data.delivery === 'sent' ? 'Сообщение передано юристу. Ответ появится здесь.' : 'Сообщение сохранено. Уведомление юристу отправляется; ответ появится здесь.';
+      poll(); window.LegalMarketing?.track('message_sent');
+    } catch (error) {
+      status.textContent = error.message + (error.status ? '' : ' Повторная отправка этого сообщения не создаст дубль.');
+      if (error.status && error.status < 500) { pendingMessage = null; input.readOnly = false; }
+    } finally { sending = false; send.disabled = false; send.textContent = pendingMessage ? 'Повторить отправку' : 'Отправить сообщение ↗'; }
+  });
+  dialog.querySelector('.chat-booking').addEventListener('click', () => {
+    const description = [...userTexts, input.value.trim()].filter(Boolean).join('\n').slice(0, 1500);
+    const topic = /зарплат|работодател|увол|трудов|на работе/i.test(description) ? 'Трудовые вопросы' : undefined;
+    client.selectContext({ description, topic, channel: 'chat', fromChat: true }); dialog.close();
+    document.getElementById('callback').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    document.getElementById('callback-name').focus({ preventScroll: true });
+  });
+
+  const aiForm = document.getElementById('ai-form'), aiInput = document.getElementById('ai-input'), aiLog = document.getElementById('ai-log'), aiSend = document.getElementById('ai-send'), aiStatus = document.getElementById('ai-status');
+  let aiBusy = false, aiController, aiHistory = [], aiTurns = 0;
+  aiForm.addEventListener('submit', async event => {
+    event.preventDefault(); if (aiBusy) { aiController.abort(); return; }
+    if (!client.capabilities.ai || !aiForm.reportValidity()) return;
+    const text = aiInput.value.trim(); if (!text) return;
+    aiBusy = true; aiInput.value = ''; aiInput.readOnly = true; aiSend.textContent = 'Остановить ответ'; aiStatus.textContent = '';
+    message(aiLog, text, 'user'); const answer = message(aiLog, 'Готовлю предварительный ответ…', 'ai'); answer.classList.add('pending');
+    const bubble = answer.querySelector('.chat-bubble'); let result = '', complete = false;
+    aiController = new AbortController(); const timer = setTimeout(() => aiController.abort(), 45000);
+    try {
+      const response = await fetch(apiUrl('/api/chat'), { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Legal-Chat': '1' }, body: JSON.stringify({ messages: [...aiHistory.slice(-10), { role: 'user', content: text }], turn_count: aiTurns + 1 }), signal: aiController.signal, credentials: 'omit' });
+      if (!response.ok) { const data = await response.json().catch(() => ({})); throw new Error(data.error || 'Помощник временно недоступен.'); }
+      if (!response.body) throw new Error('Ответ недоступен в этом браузере.');
+      const reader = response.body.getReader(), decoder = new TextDecoder(); let buffer = '';
+      while (true) {
+        const packet = await reader.read(); buffer += decoder.decode(packet.value || new Uint8Array(), { stream: !packet.done });
+        const events = buffer.split('\n\n'); buffer = events.pop();
+        for (const chunk of events) { if (!chunk.startsWith('data: ')) continue; const data = JSON.parse(chunk.slice(6)); if (data.error) throw new Error(data.error); if (data.text) { result += data.text; bubble.textContent = result; answer.classList.remove('pending'); aiLog.scrollTop = aiLog.scrollHeight; } if (data.done) complete = true; }
+        if (packet.done) break;
+      }
+      if (!result || !complete) throw new Error('Ответ прерван. Попробуйте ещё раз.');
+      aiHistory.push({ role: 'user', content: text }, { role: 'assistant', content: result }); aiTurns++;
+      if (aiTurns >= 3) aiStatus.textContent = 'Для разбора ваших документов и дальнейших действий перейдите во вкладку «Юрист».';
+    } catch (error) { bubble.textContent = result || (error.name === 'AbortError' ? 'Ответ остановлен.' : error.message); aiStatus.textContent = result ? 'Ответ прерван. Обсудите вопрос с юристом.' : 'Можно повторить вопрос или написать юристу.'; if (!result) aiInput.value = text; }
+    finally { clearTimeout(timer); answer.classList.remove('pending'); aiBusy = false; aiInput.readOnly = false; aiSend.textContent = 'Спросить помощника'; }
+  });
 })();

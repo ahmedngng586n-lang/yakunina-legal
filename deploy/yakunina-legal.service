@@ -1,0 +1,22 @@
+[Unit]
+Description=Svetlana Yakunina landing and Telegram CRM
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=yakunina
+Group=yakunina
+WorkingDirectory=/opt/yakunina-legal/current
+ExecStart=/usr/bin/python3 -u server/server.py --host 127.0.0.1 --port 9138 --config /etc/yakunina-legal/config.json
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/yakunina-legal
+
+[Install]
+WantedBy=multi-user.target
