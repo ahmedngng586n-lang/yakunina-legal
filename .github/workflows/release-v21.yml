@@ -18,6 +18,7 @@ jobs:
                   if p.is_absolute() or '..' in p.parts or p.parts[0] != 'yakunina-legal':
                       raise ValueError('Invalid archive path')
                   if item.is_dir(): continue
+                  if p.parts[1] == '.github': continue
                   target = pathlib.Path(*p.parts[1:])
                   target.parent.mkdir(parents=True, exist_ok=True)
                   target.write_bytes(z.read(item))
@@ -32,7 +33,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add dist docs server deploy .github README.md REVIEW.md MOTION.md EDIT-CONTENT.md direct-setup.md market-prices.md start-local.ps1 Dockerfile .dockerignore .gitignore
+          git add dist docs server deploy README.md REVIEW.md MOTION.md EDIT-CONTENT.md direct-setup.md market-prices.md start-local.ps1 Dockerfile .dockerignore .gitignore
           git diff --cached --quiet || git commit -m 'Release v2.1: motion, pricing, consent and CRM fixes'
           git push
           gh release create v2.1.0 yakunina-legal-site.zip --target main --title 'v2.1 — Motion, pricing and private intake' --notes 'Animated landing with local GSAP and verified Figma motion study. Three scoped legal service formats, neutral actions, separate privacy and consent documents, current consent checks and bounded CRM retention. 24 regression tests pass. HTTPS deployment: https://yakunina.153-52-103-26.sslip.io/ . Review: REVIEW.md. Figma: https://www.figma.com/design/vufFTfJJltVSwqonwnwF1e . Secrets and intake data are excluded.'
