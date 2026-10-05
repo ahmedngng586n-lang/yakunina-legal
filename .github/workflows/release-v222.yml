@@ -1,0 +1,39 @@
+name: Publish mobile fixes v2.2.2
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import reviewed sources
+        run: |
+          python - <<'PY'
+          import pathlib, zipfile
+          with zipfile.ZipFile('yakunina-legal-site.zip') as z:
+              for item in z.infolist():
+                  p = pathlib.PurePosixPath(item.filename)
+                  if p.is_absolute() or '..' in p.parts or p.parts[0] != 'yakunina-legal':
+                      raise ValueError('Invalid archive path')
+                  if item.is_dir(): continue
+                  if p.parts[1] == '.github': continue
+                  target = pathlib.Path(*p.parts[1:])
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  target.write_bytes(z.read(item))
+          PY
+      - name: Verify release
+        run: |
+          python -m unittest discover -s server -p 'test_*.py' -q
+          for source in dist/assets/app.js dist/assets/callback.js dist/assets/motion.js; do node --check "$source"; done
+      - name: Commit sources and publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add seo dist docs server deploy README.md REVIEW.md MOTION.md EDIT-CONTENT.md direct-setup.md market-prices.md start-local.ps1 Dockerfile .dockerignore .gitignore
+          git diff --cached --quiet || git commit -m 'Fix mobile layout and site favicon'
+          git push
+          gh release create v2.2.2 yakunina-legal-site.zip --target main --title 'v2.2.2 — Mobile layout and logo favicon' --notes 'Logo favicon in ICO, SVG and PNG formats plus Apple touch icon. Mobile typography, service cards, word separation, contact controls, tablet layout and chat height corrected. Primary site: https://obz-pravo.ru/ . Public files only, no credentials or intake data.'
