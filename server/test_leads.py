@@ -10,7 +10,7 @@ class LeadsTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.config = {'lead_db': str(Path(self.tmp.name)/'test.sqlite3'), 'telegram_token': 'test', 'telegram_chat_id':'1'}
-        self.body = dict(request_id='test-request-001',name='Тест',contact='@test_contact',goal='Консультация',topic='Работа',description='Проверка',consent=True,source={'utm_campaign':'123'},channel='chat')
+        self.body = dict(request_id='test-request-001',name='Тест',contact='@test_contact',goal='Консультация',topic='Работа',description='Проверка',consent=True,consent_version='2026-10-05.1',source={'utm_campaign':'123'},channel='chat')
     def tearDown(self):
         self.tmp.cleanup()
     def test_consent_and_price(self):
