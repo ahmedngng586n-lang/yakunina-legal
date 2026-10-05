@@ -1,0 +1,39 @@
+name: Publish reviewed v2.2
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import reviewed sources
+        run: |
+          python - <<'PY'
+          import pathlib, zipfile
+          with zipfile.ZipFile('yakunina-legal-site.zip') as z:
+              for item in z.infolist():
+                  p = pathlib.PurePosixPath(item.filename)
+                  if p.is_absolute() or '..' in p.parts or p.parts[0] != 'yakunina-legal':
+                      raise ValueError('Invalid archive path')
+                  if item.is_dir(): continue
+                  if p.parts[1] == '.github': continue
+                  target = pathlib.Path(*p.parts[1:])
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  target.write_bytes(z.read(item))
+          PY
+      - name: Verify release
+        run: |
+          python -m unittest discover -s server -p 'test_*.py' -q
+          for source in dist/assets/app.js dist/assets/callback.js dist/assets/motion.js; do node --check "$source"; done
+      - name: Commit sources and publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add seo dist docs server deploy README.md REVIEW.md MOTION.md EDIT-CONTENT.md direct-setup.md market-prices.md start-local.ps1 Dockerfile .dockerignore .gitignore
+          git diff --cached --quiet || git commit -m 'Release v2.2: contacts, service pages, SEO and Metrika'
+          git push
+          gh release create v2.2.0 yakunina-legal-site.zip --target main --title 'v2.2 — Contacts, service pages and SEO' --notes 'Six service pages, unique metadata, canonical URLs, structured data, robots and sitemap. MAX, email and Buzuluk address added; light card shadows. Metrika counter 113437050 and six goals created. Separate analytics choice; no form recording. 226 draft phrases plus 600 observed Wordstat queries classified. Primary HTTPS: https://obz-pravo.ru/ . Domain and www redirects active. Webmaster and Search Console ownership verified, sitemaps submitted; Google processing remains unconfirmed. Real mobile-width intake delivered to Telegram. 24 server tests pass. No credentials or intake data included.'
