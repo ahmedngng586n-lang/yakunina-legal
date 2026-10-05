@@ -10,14 +10,15 @@
   function showGoal() { formatContext.hidden = goal === 'Консультация'; formatText.textContent = 'Выбран формат: ' + goal + '.'; }
   resetFormat.addEventListener('click', () => { if (busy || pending) return; goal = 'Консультация'; showGoal(); });
   function safeUrl(value, hosts) { try { const url = new URL(value); return url.protocol === 'https:' && hosts.includes(url.hostname) ? url.href : ''; } catch { return ''; } }
-  for (const [selector, key, hosts] of [['[data-profile-max]', 'maxProfileUrl', ['max.ru', 'www.max.ru']], ['[data-profile-telegram]', 'telegramProfileUrl', ['t.me']]]) {
+  for (const [selector, key, hosts] of [['[data-profile-max]', 'maxProfileUrl', ['max.ru', 'www.max.ru', 'web.max.ru']], ['[data-profile-telegram]', 'telegramProfileUrl', ['t.me']]]) {
     const url = safeUrl(config[key], hosts); if (!url) continue;
     document.querySelectorAll(selector).forEach(link => { link.href = url; link.hidden = false; link.target = '_blank'; link.rel = 'noopener noreferrer'; });
   }
   const facts = document.getElementById('practice-facts');
   for (const [key, label] of [['address', 'Приём'], ['hours', 'Часы работы'], ['consultationDuration', 'Консультация'], ['paymentMethods', 'Оплата'], ['practiceStatus', 'Статус практики'], ['courtScope', 'Работа в суде']]) {
     if (typeof config[key] !== 'string' || !config[key].trim()) continue;
-    const dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = label; dd.textContent = config[key]; facts.append(dt, dd); facts.hidden = false;
+    if (key === 'address' && document.querySelector('.contact-city')) { document.querySelector('.contact-city').textContent = config[key]; continue; }
+    let dt = facts.querySelector('[data-fact=' + key + ']'); if (dt) { dt.nextElementSibling.textContent = config[key]; } else { dt = document.createElement('dt'); const dd = document.createElement('dd'); dt.dataset.fact = key; dt.textContent = label; dd.textContent = config[key]; facts.append(dt, dd); } facts.hidden = false;
   }
   if (config.photo && /^(assets\/)[\w./-]+$/.test(config.photo)) { const image = document.getElementById('lawyer-photo'); image.src = config.photo; image.hidden = false; }
   if (typeof config.callbackPromise === 'string' && config.callbackPromise.trim()) { const promise = document.querySelector('.callback-promise'); promise.textContent = config.callbackPromise; promise.hidden = false; }
