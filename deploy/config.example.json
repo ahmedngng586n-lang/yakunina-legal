@@ -1,0 +1,8 @@
+{
+  "telegram_token": "FILL_ON_SERVER",
+  "telegram_chat_id": "FILL_AFTER_START",
+  "telegram_owner": "YOUR_TELEGRAM_USERNAME",
+  "lead_db": "/var/lib/yakunina-legal/consultations.sqlite3",
+  "trust_proxy": true,
+  "allowed_origins": ["https://ahmedngng586n-lang.github.io", "https://yakunina.153-52-103-26.sslip.io"]
+}
