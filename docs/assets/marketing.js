@@ -19,8 +19,8 @@
     if (!counter) return;
     if (!banner) {
       banner = document.createElement('aside'); banner.className = 'analytics-choice'; banner.setAttribute('aria-label', 'Настройки аналитики');
-      const text = document.createElement('p'); text.textContent = 'Разрешить Яндекс Метрику для оценки посещений и обращений? Запись действий и форм отключена.';
-      const link = document.createElement('a'); link.href = 'privacy.html'; link.textContent = 'Подробнее';
+      const text = document.createElement('p'); text.textContent = 'С вашего разрешения используем cookie Яндекс Метрики для статистики посещений. Вебвизор и запись форм отключены.';
+      const link = document.createElement('a'); link.href = document.body.dataset.cookieUrl || 'cookie/'; link.textContent = 'Подробнее о cookie';
       const accept = document.createElement('button'); accept.type = 'button'; accept.textContent = 'Разрешить';
       const decline = document.createElement('button'); decline.type = 'button'; decline.textContent = 'Без аналитики';
       const choose = value => { try { sessionStorage.setItem('legal_analytics_consent', value); } catch {} banner.hidden = true; if (value === 'accepted') start(); };

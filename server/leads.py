@@ -20,6 +20,8 @@ def validate(body):
         raise ValueError('Укажите имя и телефон, Telegram @username или email.')
     if (body.get('kind') == 'callback' or body.get('channel') == 'callback') and not phone:
         raise ValueError('Введите телефон с кодом города или страны.')
+    if body.get('phone_format') == 'ru' and not re.fullmatch(r'7\d{10}', re.sub(r'\D', '', contact)):
+        raise ValueError('Введите российский номер: +7 и 10 цифр.')
     goal = clean(body.get('goal', 'Консультация'), 80)
     if goal not in GOALS:
         raise ValueError('Выберите формат консультации.')

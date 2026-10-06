@@ -23,6 +23,7 @@ REQUESTS = OrderedDict()
 LOCK = threading.Lock()
 CONFIG = {}
 LEAD_REQUESTS = OrderedDict()
+ROUTES = json.loads((ROOT / 'dist' / 'redirects.json').read_text(encoding='utf-8')) if (ROOT / 'dist' / 'redirects.json').exists() else {}
 
 def rate_limited(buckets, key, limit, window):
     """Bound memory even if a public endpoint receives many distinct IPs."""
@@ -96,7 +97,28 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header('Content-Length', '0')
         self.end_headers()
 
+    def redirect_legacy(self):
+        url = urllib.parse.urlsplit(self.path)
+        target = ROUTES.get(url.path)
+        directory = (ROOT / 'dist').resolve()
+        candidate = (directory / url.path.lstrip('/')).resolve()
+        if not target and url.path.endswith('/index.html') and candidate.is_relative_to(directory) and candidate.is_file():
+            target = url.path[:-10]
+        if target:
+            self.send_response(301)
+            self.send_header('Location', target + ('?' + url.query if url.query else ''))
+            self.send_header('Content-Length', '0')
+            self.end_headers()
+            return True
+        return False
+
+    def do_HEAD(self):
+        if not self.redirect_legacy():
+            return super().do_HEAD()
+
     def do_GET(self):
+        if self.redirect_legacy():
+            return
         url = urllib.parse.urlsplit(self.path)
         if url.path == '/api/health':
             return self.json_response(capabilities(CONFIG))
@@ -119,6 +141,18 @@ class Handler(SimpleHTTPRequestHandler):
         if url.path.startswith('/api/'):
             return self.json_error(404, 'Страница не найдена.')
         return super().do_GET()
+
+    def send_error(self, code, message=None, explain=None):
+        page = ROOT / 'dist' / '404.html'
+        if code != 404 or not page.is_file():
+            return super().send_error(code, message, explain)
+        data = page.read_bytes()
+        self.send_response(404)
+        self.send_header('Content-Type', 'text/html; charset=utf-8')
+        self.send_header('Content-Length', str(len(data)))
+        self.end_headers()
+        if self.command != 'HEAD':
+            self.wfile.write(data)
 
     def json_error(self, status, message):
         data = json.dumps({'error': message}, ensure_ascii=False).encode()

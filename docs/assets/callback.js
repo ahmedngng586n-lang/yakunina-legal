@@ -1,7 +1,9 @@
 'use strict';
 (() => {
   const client = window.LegalClient, config = client.config;
-  const form = document.getElementById('callback-form'), status = form.querySelector('.callback-status'), button = form.querySelector('button[type=submit]');
+  const form = document.getElementById('callback-form');
+  if (!form) return;
+  const status = form.querySelector('.callback-status'), button = form.querySelector('button[type=submit]');
   const fields = form.elements, availability = document.getElementById('form-availability');
   const formatContext = document.createElement('div'); formatContext.className = 'format-context'; formatContext.hidden = true;
   const formatText = document.createElement('p'), resetFormat = document.createElement('button'); resetFormat.type = 'button'; resetFormat.className = 'text-link'; resetFormat.textContent = 'Начать с консультации';
@@ -16,11 +18,12 @@
   }
   const facts = document.getElementById('practice-facts');
   for (const [key, label] of [['address', 'Приём'], ['hours', 'Часы работы'], ['consultationDuration', 'Консультация'], ['paymentMethods', 'Оплата'], ['practiceStatus', 'Статус практики'], ['courtScope', 'Работа в суде']]) {
+    if (!facts) continue;
     if (typeof config[key] !== 'string' || !config[key].trim()) continue;
     if (key === 'address' && document.querySelector('.contact-city')) { document.querySelector('.contact-city').textContent = config[key]; continue; }
     let dt = facts.querySelector('[data-fact=' + key + ']'); if (dt) { dt.nextElementSibling.textContent = config[key]; } else { dt = document.createElement('dt'); const dd = document.createElement('dd'); dt.dataset.fact = key; dt.textContent = label; dd.textContent = config[key]; facts.append(dt, dd); } facts.hidden = false;
   }
-  if (config.photo && /^(assets\/)[\w./-]+$/.test(config.photo)) { const image = document.getElementById('lawyer-photo'); image.src = config.photo; image.hidden = false; }
+  if (config.photo && /^(assets\/)[\w./-]+$/.test(config.photo)) { const image = document.getElementById('lawyer-photo'); if (image) { image.src = (document.body.dataset.siteRoot || '') + config.photo; image.hidden = false; } }
   if (typeof config.callbackPromise === 'string' && config.callbackPromise.trim()) { const promise = document.querySelector('.callback-promise'); promise.textContent = config.callbackPromise; promise.hidden = false; }
   const hints = { 'Трудовые вопросы': 'Что произошло на работе и когда? Если есть важная дата, укажите её.', 'Договоры и сделки': 'Какой договор и что хотите выяснить перед подписанием?', 'Недвижимость и аренда': 'Какая сделка планируется и что вызывает вопрос?', 'Претензии и судебная работа': 'В чём спор и на каком он этапе? Укажите важные даты.', 'Юридическая помощь бизнесу': 'Какая задача у организации и какой объём помощи нужен?' };
   function context() {
@@ -28,6 +31,10 @@
     document.getElementById('offline-sms').href = 'sms:+79228921257?body=' + encodeURIComponent('Здравствуйте! Хочу обсудить юридический вопрос. Тема: ' + fields.topic.value + '. Подскажите формат и стоимость консультации.');
   }
   fields.topic.addEventListener('change', context); context();
+  const savedService = (() => { try { return JSON.parse(sessionStorage.getItem('legal_selected_service') || '{}'); } catch { return {}; } })();
+  if (savedService.topic && [...fields.topic.options].some(option => option.value === savedService.topic)) fields.topic.value = savedService.topic;
+  if (['Консультация', 'Проверка документа', 'Судебное сопровождение'].includes(savedService.goal)) goal = savedService.goal;
+  context(); showGoal();
   document.addEventListener('legal:context', event => {
     if (busy || pending) return;
     const detail = event.detail || {};
@@ -42,11 +49,12 @@
     button.disabled = false; availability.textContent = '';
   });
   function validContact(value) {
+    if (fields.contact.hasAttribute('data-phone-only')) return /^7\d{10}$/.test(value.replace(/\D/g, ''));
     return (/^[+()\d\s-]+$/.test(value) && value.replace(/\D/g, '').length >= 10 && value.replace(/\D/g, '').length <= 15) || /^@[a-zA-Z0-9_]{5,32}$/.test(value) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   }
   function fieldError(field, id, message) { document.getElementById(id).textContent = message; field.setAttribute('aria-invalid', String(!!message)); }
   function validate() {
-    const checks = [[fields.name, 'name-error', fields.name.value.trim() ? '' : 'Укажите, как к вам обращаться.'], [fields.contact, 'contact-error', validContact(fields.contact.value.trim()) ? '' : 'Укажите телефон с кодом страны, Telegram @username или email.'], [fields.consent, 'consent-error', fields.consent.checked ? '' : 'Для отправки обращения подтвердите согласие.']];
+    const checks = [[fields.name, 'name-error', fields.name.value.trim() ? '' : 'Укажите, как к вам обращаться.'], [fields.contact, 'contact-error', validContact(fields.contact.value.trim()) ? '' : fields.contact.hasAttribute('data-phone-only') ? 'Введите номер полностью: +7 и 10 цифр.' : 'Укажите телефон с кодом страны, Telegram @username или email.'], [fields.consent, 'consent-error', fields.consent.checked ? '' : 'Для отправки обращения подтвердите согласие.']];
     checks.forEach(check => fieldError(...check)); const first = checks.find(check => check[2]); if (first) first[0].focus(); return !first;
   }
   for (const [field, id] of [[fields.name, 'name-error'], [fields.contact, 'contact-error'], [fields.consent, 'consent-error']]) { field.addEventListener('input', () => { if (document.getElementById(id).textContent) fieldError(field, id, ''); }); }
@@ -54,6 +62,7 @@
   form.addEventListener('submit', async event => {
     event.preventDefault(); if (busy || !client.available || (!pending && !validate())) return;
     if (!pending) pending = { request_id: requestId, name: fields.name.value.trim(), contact: fields.contact.value.trim(), topic: fields.topic.value, goal, description: fields.description.value.trim(), consent: fields.consent.checked, consent_version: '2026-10-05.1', website: fields.website.value, source: client.source, channel, ...client.conversation() };
+    if (fields.contact.hasAttribute('data-phone-only')) { pending.phone_format = 'ru'; pending.kind = 'callback'; }
     busy = true; lockFields(true); button.disabled = true; button.textContent = 'Отправляем…'; status.textContent = '';
     try {
       const data = await client.request('/api/lead', pending);
@@ -61,7 +70,7 @@
       document.getElementById('lead-result').textContent = data.delivery === 'sent' ? 'Заявка передана юристу. С вами свяжутся по указанному контакту.' : 'Заявка сохранена. Уведомление юристу отправляется. Для срочного обсуждения позвоните.';
       document.getElementById('lead-reference').textContent = '#' + data.id;
       const heading = document.querySelector('#lead-success h3'); heading.tabIndex = -1; heading.focus({ preventScroll: true });
-      pending = null; window.LegalMarketing?.track('lead_created');
+      pending = null; try { sessionStorage.removeItem('legal_selected_service'); } catch {} window.LegalMarketing?.track('lead_created');
     } catch (error) {
       status.textContent = error.message + (error.status ? '' : ' Повторная отправка этой заявки не создаст дубль.');
       if (error.status && error.status < 500) { pending = null; lockFields(false); }

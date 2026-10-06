@@ -37,7 +37,11 @@
   }
   const client = window.LegalClient = { uid, source, sessionId, apiUrl, request, config, capabilities: {}, available: false,
     conversation: () => ({ session_id: sessionId, ...(token ? { conversation_token: token } : {}) }),
-    selectContext: detail => document.dispatchEvent(new CustomEvent('legal:context', { detail })) };
+    selectContext: detail => {
+      // Only a service choice is carried between pages; message text stays in the chat.
+      if (detail.topic || detail.goal) save('legal_selected_service', JSON.stringify({ topic: detail.topic, goal: detail.goal }));
+      document.dispatchEvent(new CustomEvent('legal:context', { detail }));
+    } };
   client.ready = location.protocol === 'file:' ? Promise.resolve(false) : request('/api/health', null, { timeout: 5000 }).then(data => {
     client.available = true; client.capabilities = data.capabilities || {}; return true;
   }).catch(() => false);
@@ -138,6 +142,10 @@
     const description = [...userTexts, input.value.trim()].filter(Boolean).join('\n').slice(0, 1500);
     const topic = /зарплат|работодател|увол|трудов|на работе/i.test(description) ? 'Трудовые вопросы' : undefined;
     client.selectContext({ description, topic, channel: 'chat', fromChat: true }); dialog.close();
+    if (!document.getElementById('callback')) {
+      location.assign(document.body.dataset.bookingUrl || 'zapis-na-priem/');
+      return;
+    }
     document.getElementById('callback').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
     document.getElementById('callback-name').focus({ preventScroll: true });
   });

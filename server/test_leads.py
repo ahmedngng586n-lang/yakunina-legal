@@ -27,6 +27,11 @@ class LeadsTest(unittest.TestCase):
             leads.validate(dict(self.body,kind='callback',channel='callback'))
         lead=leads.validate(dict(self.body,contact='+7 (922) 123-45-67',kind='callback',channel='callback'))
         self.assertEqual(lead['channel'],'Обратный звонок')
+    def test_russian_phone_format_is_checked_on_server(self):
+        for value in ('@test_contact', '+7 123', '+1 555 123 4567', '+7 922 123 45 678'):
+            with self.assertRaises(ValueError):
+                leads.validate(dict(self.body, contact=value, phone_format='ru'))
+        self.assertEqual(leads.validate(dict(self.body, contact='+7 (922) 123-45-67', phone_format='ru'))['contact'], '+7 (922) 123-45-67')
     def test_delivery_failure_and_retry(self):
         lead_id,_=leads.queue(self.config,self.body)
         with patch('leads.urllib.request.urlopen',side_effect=OSError('offline')):

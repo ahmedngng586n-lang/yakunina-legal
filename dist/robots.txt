@@ -1,3 +1,7 @@
 User-agent: *
+Allow: /
 Disallow: /api/
+Disallow: /server/
+Disallow: /private/
+Disallow: /redirects.json
 Sitemap: https://obz-pravo.ru/sitemap.xml

@@ -1,0 +1,11 @@
+{
+  "/consultation.html": "/uslugi/konsultaciya/",
+  "/labor.html": "/uslugi/trudovye-spory/",
+  "/contracts.html": "/uslugi/dogovory/",
+  "/real-estate.html": "/uslugi/nedvizhimost/",
+  "/court.html": "/uslugi/sudebnoe-predstavitelstvo/",
+  "/business.html": "/uslugi/biznes/",
+  "/privacy.html": "/politika-konfidencialnosti/",
+  "/consent.html": "/soglasie/",
+  "/index.html": "/"
+}

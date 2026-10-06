@@ -34,7 +34,7 @@
       if (business) fold(business, [...business.children].filter(node =>
         node.matches('p:not(.eyebrow), .service-detail-link')), 'Какая помощь доступна');
       const steps = document.querySelector('.steps');
-      if (steps) fold(steps.parentElement, [steps], 'Три шага к консультации');
+      if (steps) fold(steps.parentElement, [steps], 'Четыре шага к консультации');
       const about = document.querySelector('.about-details');
       if (about) fold(about, [...about.children], 'Образование и опыт');
       const form = document.querySelector('#callback-form');
