@@ -16,9 +16,11 @@ jobs:
         run: python -m unittest discover -s server -p 'test_*.py' -v
       - name: Verify JavaScript syntax
         run: |
-          for source in dist/assets/app.js dist/assets/callback.js dist/assets/marketing.js dist/assets/site-config.js; do
+          for source in dist/assets/*.js; do
             node --check "$source"
           done
+      - name: Verify SEO, content and internal links
+        run: python verify_site.py
       - name: Verify static preview matches application
         run: |
           python - <<'PY'
